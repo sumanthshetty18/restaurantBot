@@ -3,6 +3,7 @@
 
 const { ActivityHandler, MessageFactory } = require('botbuilder');
 const { MakeReservationDialog } = require('./componentDialogs/makeReservationDialog');
+const { CancelReservationDialog } = require('./componentDialogs/cancelReservationDialog');
 
 class RRBOT extends ActivityHandler {
     constructor(conversationState,userState) {
@@ -12,6 +13,7 @@ class RRBOT extends ActivityHandler {
         this.userState = userState;
         this.dialogState = conversationState.createProperty("dialogState");
         this.makeReservationDialog = new MakeReservationDialog(this.conversationState,this.userState); 
+        this.cancelReservationDialog = new CancelReservationDialog(this.conversationState,this.userState); 
 
         this.previousIntent = this.conversationState.createProperty("previousIntent");
         this.conversationData= this.conversationState.createProperty("conversationData");
@@ -75,14 +77,27 @@ class RRBOT extends ActivityHandler {
         switch(currentIntent){
 
             case 'Make Reservation':
-                console.log("Inside Make reservation case");
+                //console.log("Inside Make reservation case");
                 await this.conversationData.set(context,{endDialog:false});
                 await this.makeReservationDialog.run(context,this.dialogState);
                 conversationData.endDialog = await this.makeReservationDialog.isDialogComplete();
                 if(conversationData.endDialog){
+                    await this.previousIntent.set(context,{intentName:null});
                     await this.sendSuggestedActions(context);
                 }
                 break;
+
+            case 'Cancel Reservation':
+                //console.log("Inside Cancel reservation case");
+                await this.conversationData.set(context,{endDialog:false});
+                await this.cancelReservationDialog.run(context,this.dialogState);
+                conversationData.endDialog = await this.cancelReservationDialog.isDialogComplete();
+                if(conversationData.endDialog){
+                    await this.previousIntent.set(context,{intentName:null});
+                    await this.sendSuggestedActions(context);
+                }
+                break;
+
 
             default:
                 console.log("Did not match Make Reservation case");

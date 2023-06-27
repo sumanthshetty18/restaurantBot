@@ -38,7 +38,7 @@ class MakeReservationDialog extends ComponentDialog{
     }
 
     async run(turnContext,accessor){
-        //console.log("inside run");
+         
         const dialogSet = new DialogSet(accessor);
         dialogSet.add(this);
         const dialogContext= await dialogSet.createContext(turnContext);
@@ -51,7 +51,7 @@ class MakeReservationDialog extends ComponentDialog{
     }
 
     async firstStep(step){
-        console.log("inside first step method");
+         
         endDialog=false;
         return await step.prompt(CONFIRM_PROMPT,'Would you like to make a reservation?',['yes','no']);
     }
@@ -60,11 +60,17 @@ class MakeReservationDialog extends ComponentDialog{
         if(step.result=== true){
             return await step.prompt(TEXT_PROMPT,'In what name reservation is to be made?');
         }
+        if(step.result === false)
+        { 
+            await step.context.sendActivity("You chose not to go ahead with reservation.");
+            endDialog = true;
+            return await step.endDialog();   
+        }
     }
 
     async getNumberOfParticipants(step){
         step.values.name =step.result;
-        return await step.prompt(NUMBER_PROMPT,'How many participants(0-50)?');
+        return await step.prompt(NUMBER_PROMPT,'How many participants(1-50)?');
     }
 
     async getDate(step){
@@ -98,9 +104,8 @@ class MakeReservationDialog extends ComponentDialog{
     }
 
     async numberPromptValidator(promptContext){
-        console.log(promptContext.recognized.succeded)
-        console.log(promptContext.recognized.value)
-        return promptContext.recognized.succeeded && promptContext.recognized.value>1 && promptContext.recognized.value < 150
+         
+        return promptContext.recognized.succeeded && promptContext.recognized.value>0 && promptContext.recognized.value < 50
     }
 
     async isDialogComplete(){
