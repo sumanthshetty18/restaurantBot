@@ -5,6 +5,8 @@ const { ActivityHandler, MessageFactory } = require('botbuilder');
 const { MakeReservationDialog } = require('./componentDialogs/makeReservationDialog');
 const { CancelReservationDialog } = require('./componentDialogs/cancelReservationDialog');
 
+const {LuisRecognizer}  = require('botbuilder-ai');
+
 class RRBOT extends ActivityHandler {
     constructor(conversationState,userState) {
         super();
@@ -18,11 +20,27 @@ class RRBOT extends ActivityHandler {
         this.previousIntent = this.conversationState.createProperty("previousIntent");
         this.conversationData= this.conversationState.createProperty("conversationData");
 
-        // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
+        const dispatchRecognizer = new LuisRecognizer({
+            applicationId: process.env.LuisAppId,
+            endpointKey: process.env.LuisAPIKey,
+            endpoint: `https://cphsluisv1-authoring.cognitiveservices.azure.com/`
+        }, {
+            includeAllIntents: true
+        }, true);
+
+
+         
         this.onMessage(async (context, next) => {
-            
-            await this.dispatchToIntentAsync(context);
-            // By calling next() you ensure that the next BotHandler is run.
+            const luisResult = await dispatchRecognizer.recognize(context)
+            //console.log(luisResult);
+            const intent = LuisRecognizer.topIntent(luisResult); 
+
+            const entities = luisResult.entities;
+            //console.log(entities);
+
+            //await this.dispatchToIntentAsync(context,intent);
+            await this.dispatchToIntentAsync(context,intent,entities);
+             
             await next();
         });
 
@@ -57,7 +75,7 @@ class RRBOT extends ActivityHandler {
         await turnContext.sendActivity(reply);
     }
 
-    async dispatchToIntentAsync(context){
+    async dispatchToIntentAsync(context,intent,entities){
 
         var currentIntent = '';
         const previousIntent = await this.previousIntent.get(context,{});
@@ -67,19 +85,23 @@ class RRBOT extends ActivityHandler {
             currentIntent= previousIntent.intentName;
         }
         else if(previousIntent.intentName && conversationData.endDialog===true){
-            currentIntent = context.activity.text;
+            //currentIntent = context.activity.text;
+            currentIntent = intent;
         }
         else{
-            currentIntent=context.activity.text;
-            await this.previousIntent.set(context,{intentName:context.activity.text});
+            //currentIntent=context.activity.text;
+            currentIntent=intent;
+            //await this.previousIntent.set(context,{intentName:context.activity.text});
+            await this.previousIntent.set(context,{intentName:intent});
         }
 
         switch(currentIntent){
 
-            case 'Make Reservation':
+            case 'Make_Reservation':
                 //console.log("Inside Make reservation case");
                 await this.conversationData.set(context,{endDialog:false});
-                await this.makeReservationDialog.run(context,this.dialogState);
+                //await this.makeReservationDialog.run(context,this.dialogState);
+                await this.makeReservationDialog.run(context,this.dialogState,entities);
                 conversationData.endDialog = await this.makeReservationDialog.isDialogComplete();
                 if(conversationData.endDialog){
                     await this.previousIntent.set(context,{intentName:null});
@@ -87,7 +109,7 @@ class RRBOT extends ActivityHandler {
                 }
                 break;
 
-            case 'Cancel Reservation':
+            case 'Cancel_Reservation':
                 //console.log("Inside Cancel reservation case");
                 await this.conversationData.set(context,{endDialog:false});
                 await this.cancelReservationDialog.run(context,this.dialogState);

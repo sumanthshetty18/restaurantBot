@@ -37,7 +37,8 @@ class MakeReservationDialog extends ComponentDialog{
 
     }
 
-    async run(turnContext,accessor){
+    //async run(turnContext,accessor){
+    async run(turnContext,accessor,entities){
          
         const dialogSet = new DialogSet(accessor);
         dialogSet.add(this);
@@ -45,13 +46,14 @@ class MakeReservationDialog extends ComponentDialog{
 
         const results= await dialogContext.continueDialog();
         if(results.status === DialogTurnStatus.empty){
-            await dialogContext.beginDialog(this.id);
+            //await dialogContext.beginDialog(this.id);
+            await dialogContext.beginDialog(this.id,entities);
         }
 
     }
 
     async firstStep(step){
-         
+        step.values.noOfParticipants = step._info.options.noOfParticipants[0];
         endDialog=false;
         return await step.prompt(CONFIRM_PROMPT,'Would you like to make a reservation?',['yes','no']);
     }
@@ -70,11 +72,16 @@ class MakeReservationDialog extends ComponentDialog{
 
     async getNumberOfParticipants(step){
         step.values.name =step.result;
-        return await step.prompt(NUMBER_PROMPT,'How many participants(1-50)?');
+        if(!step.values.noOfParticipants)
+            return await step.prompt(NUMBER_PROMPT,'How many participants(1-50)?');
+        else
+            return await step.continueDialog()
     }
 
     async getDate(step){
-        step.values.noOfParticipants = step.result;
+        if(!step.values.noOfParticipants)
+            step.values.noOfParticipants = step.result;
+            
         return await step.prompt(DATETIME_PROMPT,'On which date you want to make reservation?');
         
     }

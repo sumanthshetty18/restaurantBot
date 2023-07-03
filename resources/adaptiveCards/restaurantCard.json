@@ -26,8 +26,15 @@
               },
               {
                 "type": "TextBlock",
-                "text": "The Bistro is one of the famous restaurant serving Bangaloreans from past 8 years. You will have a great time here. Please rethink once before you go ahead with cancellation!!!",
+                "text": "The Bistro is one of the famous restaurant serving Bangaloreans from past 8 years. You will have a great time here.",
                 "size": "small",
+                "wrap": true
+              },
+              {
+                "type": "TextBlock",
+                "text": "Please rethink once before you go ahead with cancellation!!!",
+                "weight": "bolder",
+                "size": "medium",
                 "wrap": true
               }
             ]
